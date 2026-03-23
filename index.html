@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self';
+      script-src  'self';
+      style-src   'self' 'unsafe-inline';
+      img-src     'self' data: blob:;
+      media-src   'self' blob:;
+    " />
+  <title>Gavrilli Photo Booth</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 1 — Start
+       ══════════════════════════════════════════════ -->
+  <section id="screen-start" class="screen active">
+    <div class="screen-content">
+      <div class="brand-emblem">
+        <div class="brand-ring"></div>
+        <span class="brand-icon-char">☕</span>
+      </div>
+      <h1 class="brand-name">GAVRİLLİ</h1>
+      <div class="title-line"></div>
+      <p class="brand-tagline">PHOTO BOOTH</p>
+      <button id="btn-start" class="btn-primary btn-large">
+        Fotoğraf Çek
+      </button>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 2 — Promo Code
+       ══════════════════════════════════════════════ -->
+  <section id="screen-promo" class="screen">
+    <div class="screen-content">
+      <p class="screen-eyebrow">GAVRİLLİ PHOTO BOOTH</p>
+      <h2 class="screen-title">Promosyon Kodu</h2>
+      <p class="screen-desc">Varsa promosyon kodunuzu girin</p>
+
+      <div class="promo-form">
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="promo-input"
+            class="promo-input"
+            placeholder="KOD GİRİN"
+            maxlength="20"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <p id="promo-error" class="error-msg" aria-live="polite"></p>
+
+        <!-- TODO: POS / payment integration — activate this flow here -->
+        <button id="btn-promo-submit" class="btn-primary">Devam Et</button>
+        <button id="btn-no-promo" class="btn-ghost">Promosyon kodum yok</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 3 — Camera Capture
+       ══════════════════════════════════════════════ -->
+  <section id="screen-capture" class="screen screen-capture-layout">
+
+    <header class="capture-header">
+      <div class="capture-brand">GAVRİLLİ</div>
+      <div class="photo-counter">
+        Poz <span id="photo-count">1</span><span class="counter-total">/4</span>
+      </div>
+      <div id="capture-status" class="capture-status">Hazırlanıyor…</div>
+    </header>
+
+    <div class="camera-wrap">
+      <video id="camera-preview" autoplay muted playsinline></video>
+
+      <div id="countdown-overlay" class="countdown-overlay hidden">
+        <div class="countdown-ring"></div>
+        <span id="countdown-number">3</span>
+      </div>
+
+      <div id="flash-overlay" class="flash-overlay hidden"></div>
+    </div>
+
+    <div id="thumbnail-strip" class="thumbnail-strip">
+      <div class="thumb-slot" id="thumb-0"><span class="thumb-num">1</span></div>
+      <div class="thumb-slot" id="thumb-1"><span class="thumb-num">2</span></div>
+      <div class="thumb-slot" id="thumb-2"><span class="thumb-num">3</span></div>
+      <div class="thumb-slot" id="thumb-3"><span class="thumb-num">4</span></div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 4 — Preview (paper layout)
+       ══════════════════════════════════════════════ -->
+  <section id="screen-preview" class="screen">
+    <div class="screen-content preview-screen-content">
+
+      <p class="screen-eyebrow">GAVRİLLİ PHOTO BOOTH</p>
+      <h2 class="screen-title">Baskı Önizlemesi</h2>
+
+      <div id="preview-paper-wrap" class="preview-paper-wrap">
+        <img id="preview-composed" class="preview-paper" alt="Baskı önizlemesi" />
+        <p class="cut-hint">✂︎&nbsp; Kağıt ortadan kesilecektir</p>
+      </div>
+
+      <div class="action-row">
+        <button id="btn-retake" class="btn-ghost" disabled>↩ Yeniden Çek</button>
+        <button id="btn-print"  class="btn-primary" disabled>🖨&nbsp; Yazdır</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 5 — Printing / Done
+       ══════════════════════════════════════════════ -->
+  <section id="screen-printing" class="screen">
+    <div class="screen-content">
+      <div id="print-spinner" class="spinner"></div>
+      <h2 id="printing-status-text" class="screen-title">Yazdırılıyor…</h2>
+      <p id="printing-sub" class="screen-desc">Lütfen bekleyin</p>
+    </div>
+  </section>
+
+</div><!-- #app -->
+
+<script src="renderer.js"></script>
+</body>
+</html>

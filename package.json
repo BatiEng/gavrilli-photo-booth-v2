@@ -1,0 +1,55 @@
+{
+  "name": "gavrilli-photo-booth",
+  "version": "1.0.0",
+  "description": "Gavrilli Photo Booth",
+  "main": "main.js",
+  "author": "Gavrilli",
+  "license": "MIT",
+
+  "scripts": {
+    "start":  "electron .",
+    "dev":    "electron . --inspect",
+    "dist":   "electron-builder --win --x64",
+    "dist:dir": "electron-builder --win --x64 --dir"
+  },
+
+  "build": {
+    "appId": "com.gavrilli.photobooth",
+    "productName": "Gavrilli Photo Booth",
+    "copyright": "Gavrilli",
+
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "renderer.js"
+    ],
+
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.ico"
+    },
+
+    "nsis": {
+      "oneClick": true,
+      "perMachine": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "shortcutName": "Gavrilli Photo Booth",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+
+    "directories": {
+      "output": "dist-build"
+    }
+  },
+
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
