@@ -504,8 +504,9 @@ async function composePhotos() {
   const W      = 1843;   // 15.61 cm × 118 px/cm  ≈ 1843
   const H      = 1240;   // 10.5  cm × 118 px/cm  ≈ 1240
   const MARGIN = 18;     // outer margin (all sides)
-  const H_GAP  = 8;      // horizontal gap between columns
-  const V_GAP  = 10;     // vertical gap between rows
+  const H_GAP  = 5;      // gap between photo slots
+  const V_GAP  = 5;      // gap between rows
+  const FRAME  = 8;      // white border inside each slot
   const COLS   = 4;
   const ROWS   = 2;
 
@@ -517,18 +518,18 @@ async function composePhotos() {
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // White background
-  ctx.fillStyle = '#ffffff';
+  // Light-gray background — makes the white frames pop
+  ctx.fillStyle = '#d8d8d8';
   ctx.fillRect(0, 0, W, H);
 
-  // Draw cut-line indicator (faint dashed line at vertical centre)
+  // Faint dashed cut-line at vertical centre
   ctx.save();
-  ctx.setLineDash([6, 6]);
-  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-  ctx.lineWidth   = 1;
+  ctx.setLineDash([8, 8]);
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth   = 1.5;
   ctx.beginPath();
-  ctx.moveTo(0,     H / 2);
-  ctx.lineTo(W,     H / 2);
+  ctx.moveTo(0, H / 2);
+  ctx.lineTo(W, H / 2);
   ctx.stroke();
   ctx.restore();
 
@@ -536,16 +537,71 @@ async function composePhotos() {
   // composition slots are portrait, so we rotate clockwise −90°).
   const rotated = images.map((img) => rotateImage(img, -90));
 
-  // Draw all 8 cells (2 rows × 4 columns, rows share the same 4 photos)
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
       const x = MARGIN + col * (photoW + H_GAP);
       const y = MARGIN + row * (photoH + V_GAP);
-      drawCropped(ctx, rotated[col], x, y, photoW, photoH);
+
+      // ── White frame ──
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, y, photoW, photoH);
+
+      // ── Photo inset by frame width ──
+      const px = x + FRAME;
+      const py = y + FRAME;
+      const pw = photoW - 2 * FRAME;
+      const ph = photoH - 2 * FRAME;
+      drawCropped(ctx, rotated[col], px, py, pw, ph);
+
+      // ── "gavrilli" watermark — bottom row, last 2 photos ──
+     if (col === COLS - 1) {
+  drawGavrilliWatermark(ctx, px, py, pw, ph);
+}
     }
   }
 
   return canvas;
+}
+
+/**
+ * Draw the "gavrilli" brand text in white, rotated −90°,
+ * anchored at the TOP-RIGHT corner of the photo image area.
+ *
+ * After rotate(−π/2):
+ *   canvas +x → points UPWARD on screen
+ *   canvas +y → points RIGHTWARD on screen
+ *
+ * textAlign:'right'  → text extends in −x direction → DOWNWARD on screen
+ * textBaseline:'bottom' → glyphs sit above y=0 in rotated space → into the
+ *                         photo (leftward / inward in screen space)
+ *
+ * Result: reading the photo normally the text appears vertical on the right
+ * side. Tilt the photo 90° counter-clockwise and "gavrilli" reads normally.
+ */
+function drawGavrilliWatermark(ctx, x, y, w, h) {
+  const fontSize = Math.max(16, Math.round(h * 0.052));
+  const padRight = Math.round(fontSize * 0.30); // distance inward from right edge
+  const padTop   = Math.round(fontSize * 0.50); // distance down from top edge
+
+  ctx.save();
+
+  // Move origin to top-right area of the photo, then rotate −90°
+  ctx.translate(x + w - padRight, y + padTop);
+  ctx.rotate(-Math.PI / 2);
+
+  ctx.font         = `italic 700 ${fontSize}px Georgia, 'Times New Roman', serif`;
+  ctx.textAlign    = 'right';    // 'i' at anchor, text grows downward on screen
+  ctx.textBaseline = 'bottom';   // glyphs extend into the photo (inward direction)
+
+  ctx.shadowColor   = 'rgba(0, 0, 0, 0.60)';
+  ctx.shadowBlur    = Math.round(fontSize * 0.5);
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+  ctx.fillText('gavrilli', 0, 0);
+
+  ctx.restore();
 }
 
 /**
