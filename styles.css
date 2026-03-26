@@ -354,6 +354,7 @@ button:disabled {
   object-fit: contain;
   display: block;
   transform: scaleX(-1);
+  filter: grayscale(100%);
 }
 
 /* ── Countdown overlay ── */
@@ -557,6 +558,97 @@ button:disabled {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ================================================================
+   SCREEN 2.5 — Payment
+   ================================================================ */
+#screen-payment {
+  background: var(--bg);
+}
+
+/* Price breakdown card */
+.payment-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 28px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.payment-label {
+  font-size: 13px;
+  color: var(--text-mid);
+  letter-spacing: 0.5px;
+}
+
+.payment-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+}
+
+/* Discount row — green tint */
+.payment-row--discount .payment-label { color: #7ab87a; }
+.payment-val--discount {
+  color: #7ab87a;
+  font-size: 16px;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+/* Divider */
+.payment-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* Total row */
+.payment-row--total .payment-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.payment-val--total {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* Result icon (checkmark / X / emoji shown after POS result) */
+.payment-result-icon {
+  font-size: 52px;
+  line-height: 1;
+}
+.payment-result-icon--success {
+  color: #7ab87a;
+  text-shadow: 0 0 30px rgba(122, 184, 122, 0.4);
+}
+.payment-result-icon--error {
+  color: var(--danger);
+  text-shadow: 0 0 30px rgba(184, 64, 64, 0.4);
+}
+
+/* Sub-text below status */
+.payment-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  min-height: 16px;
 }
 
 /* ================================================================

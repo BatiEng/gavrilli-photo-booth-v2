@@ -10,6 +10,7 @@
       style-src   'self' 'unsafe-inline';
       img-src     'self' data: blob:;
       media-src   'self' blob:;
+      connect-src 'self' http://localhost:9373 https:;
     " />
   <title>Gavrilli Photo Booth</title>
   <link rel="stylesheet" href="styles.css" />
@@ -63,6 +64,49 @@
         <!-- TODO: POS / payment integration — activate this flow here -->
         <button id="btn-promo-submit" class="btn-primary">Devam Et</button>
         <button id="btn-no-promo" class="btn-ghost">Promosyon kodum yok</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 2.5 — Payment
+       ══════════════════════════════════════════════ -->
+  <section id="screen-payment" class="screen">
+    <div class="screen-content">
+      <p class="screen-eyebrow">GAVRİLLİ PHOTO BOOTH</p>
+      <h2 class="screen-title" id="payment-title">Ödeme</h2>
+
+      <!-- Price breakdown -->
+      <div class="payment-box">
+        <div class="payment-row">
+          <span class="payment-label">Fotoğraf Ücreti</span>
+          <span class="payment-val" id="payment-original-val">₺200,00</span>
+        </div>
+        <div class="payment-row payment-row--discount" id="payment-discount-row" style="display:none">
+          <span class="payment-label">Promosyon İndirimi</span>
+          <span class="payment-val payment-val--discount" id="payment-discount-val">−₺0,00</span>
+        </div>
+        <div class="payment-divider"></div>
+        <div class="payment-row payment-row--total">
+          <span class="payment-label">Toplam</span>
+          <span class="payment-val payment-val--total" id="payment-final-val">₺200,00</span>
+        </div>
+      </div>
+
+      <!-- Spinner (shown while processing) -->
+      <div id="payment-spinner" class="spinner"></div>
+
+      <!-- Result icon (hidden until success/error/free) -->
+      <div id="payment-result-icon" class="payment-result-icon" style="display:none"></div>
+
+      <!-- Status text -->
+      <p id="payment-status" class="screen-desc">POS cihazına bağlanılıyor…</p>
+      <p id="payment-sub" class="payment-sub"></p>
+
+      <!-- Retry / Back (hidden until error) -->
+      <div class="action-row" id="payment-actions" style="display:none">
+        <button id="btn-payment-retry" class="btn-primary">Tekrar Dene</button>
+        <button id="btn-payment-back"  class="btn-ghost">← Geri</button>
       </div>
     </div>
   </section>
