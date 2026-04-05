@@ -58,9 +58,6 @@ fullscreen: true,
 Uygulama `silent: true` ile çalışır — yazdır butonuna basınca
 sistem diyalogu açmadan doğrudan **varsayılan yazıcıya** gönderir.
 
-Windows'ta varsayılan yazıcıyı ayarlamak için:
-Ayarlar → Bluetooth ve aygıtlar → Yazıcılar → istediğin yazıcıya sağ tıkla → Varsayılan olarak ayarla
-
 ---
 
 ## E) Kamera seçimi (dış kamera)
