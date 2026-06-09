@@ -25,6 +25,8 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  /* Scrollbar rezervasyonu sağa kayma yapmasın */
+  scrollbar-gutter: stable;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -38,6 +40,10 @@ html, body {
   position: fixed;
   inset: 0;
   overflow: hidden;
+  /* Dikey ekranda tam ortalama garantisi */
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
 }
 
 .screen {
@@ -51,6 +57,8 @@ html, body {
   pointer-events: none;
   transition: opacity 0.4s var(--ease);
   overflow-y: auto;
+  /* Scrollbar layout shift önle */
+  overflow-x: hidden;
 }
 
 .screen.active {
@@ -397,6 +405,8 @@ button:disabled {
   overflow: hidden;
   background: #000;
   min-height: 0;
+  /* Dikey ekranda ekranın tamamını kaplamaması için */
+  max-height: 60vh;
 }
 
 #camera-preview {
@@ -766,11 +776,15 @@ button:disabled {
    ================================================================ */
 @media (orientation: portrait) {
 
-  /* Genel içerik kolonu — tam genişlik kullan */
+  /* Genel içerik kolonu — tam genişlik, tam ortalama */
   .screen-content {
     max-width: 100%;
+    width: 100%;
     padding: 48px 36px;
     gap: 24px;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* Başlangıç ekranı logosu */
@@ -783,20 +797,37 @@ button:disabled {
     letter-spacing: 12px;
   }
 
-  /* Kamera ekranı — portre için cover kullan, tam doldur */
+  /* Kamera capture ekranı layout */
+  .screen-capture-layout {
+    justify-content: flex-start;
+  }
+
+  /* Kamera sarmalayıcı — portrette fazla yer kaplamasın */
+  .camera-wrap {
+    max-height: 52vh;
+    flex: 0 0 52vh;
+  }
+
+  /* Kamera — portre için cover kullan, tam doldur */
   #camera-preview {
     object-fit: cover;
+    width: 100%;
+    height: 100%;
   }
 
   /* Thumbnail strip — portre ekranda daha büyük */
+  .thumbnail-strip {
+    padding: 16px 20px;
+  }
+
   .thumb-slot {
-    width: 100px;
-    height: 76px;
+    width: 80px;
+    height: 60px;
   }
 
   /* Countdown rakamı */
   #countdown-number {
-    font-size: clamp(160px, 22vw, 260px);
+    font-size: clamp(120px, 18vw, 200px);
   }
 
   /* Önizleme ekranı padding */
@@ -806,23 +837,29 @@ button:disabled {
 
   /* Döndürülmüş görsel — portre ekran için kısıtlamalar */
   .preview-paper {
-    /* CSS height → görsel genişlik, CSS width → görsel yükseklik */
-    max-height: 78vw;   /* görsel genişlik ≤ %78 ekran genişliği */
-    max-width: 65vh;    /* görsel yükseklik ≤ %65 ekran yüksekliği */
+    max-height: 78vw;
+    max-width: 62vh;
   }
 
   /* Yan logolar — portrette küçült */
   .preview-side-logo {
-    width: 80px;
+    width: 70px;
   }
 
   /* Ana önizleme satırı — aralığı azalt */
   .preview-main-row {
-    gap: 18px;
+    gap: 16px;
   }
 
   /* Ödeme kartı */
-  .payment-card {
+  .payment-box {
     max-width: 90vw;
+  }
+
+  /* Butonlar portrette tam genişlik */
+  .btn-primary,
+  .btn-ghost {
+    width: 100%;
+    max-width: 360px;
   }
 }
