@@ -36,14 +36,20 @@ html, body {
 /* ================================================================
    SCREEN SYSTEM
    ================================================================ */
+/*
+ * Monitör fiziksel olarak dikey tutulmuş ama Windows landscape modunda.
+ * #app'i 90° CW döndürerek içeriği portrait gibi göster.
+ * NOT: Windows Ekran Ayarları → Dikey yapılırsa bu 3 satır kaldırılmalı.
+ */
 #app {
   position: fixed;
-  inset: 0;
+  width: 100vh;
+  height: 100vw;
+  top: calc(50vh - 50vw);
+  left: calc(50vw - 50vh);
   overflow: hidden;
-  /* Dikey ekranda tam ortalama garantisi */
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
+  transform-origin: center center;
+  transform: rotate(90deg);
 }
 
 .screen {
