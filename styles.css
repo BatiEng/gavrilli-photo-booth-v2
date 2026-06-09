@@ -394,14 +394,18 @@ button:disabled {
 /* ── Camera feed ── */
 .camera-wrap {
   position: relative;
-  flex: 1;
-  width: 100%;
+  flex: 0 0 auto;
+  width: 85%;
+  max-width: 520px;
+  aspect-ratio: 4 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   background: #000;
-  min-height: 0;
+  border-radius: 12px;
+  margin: auto;
+  border: 1px solid rgba(200, 150, 62, 0.2);
 }
 
 #camera-preview {
