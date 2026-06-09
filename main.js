@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, session } = require('electron');
+const { app, BrowserWindow, ipcMain, session, screen } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -9,16 +9,22 @@ let mainWindow;
 // Window creation
 // ─────────────────────────────────────────────
 function createWindow() {
+  // Ekranın gerçek boyutunu oku — portrait modda da doğru değeri verir
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { x, y, width, height } = primaryDisplay.bounds;
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
+    x,
+    y,
+    width,
+    height,
     title: 'Photo Booth',
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     backgroundColor: '#0d0d0d',
-    fullscreen: true,
+    frame: false,        // başlık çubuğu yok
+    fullscreen: false,   // kiosk ile çakışıyor, bounds ile yerine geçildi
     kiosk: true,
+    alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -28,8 +34,11 @@ function createWindow() {
     }
   });
 
-  // Hide the menu bar (keeps Alt-show-menu behaviour on Windows/Linux)
+  // Hide the menu bar
   mainWindow.setMenuBarVisibility(false);
+
+  // Pencereyi kesin olarak tüm ekrana yay
+  mainWindow.setBounds({ x, y, width, height });
 
   mainWindow.loadFile('index.html');
 
