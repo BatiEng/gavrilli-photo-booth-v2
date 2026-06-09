@@ -272,15 +272,34 @@ async function savePayment({ originalPrice, discountAmount, finalPrice,
 // ================================================================
 function initStartScreen() {
   showScreen('screen-start');
-  $('btn-start').onclick = () => initPromoScreen();
+  $('btn-start').onclick = () => initPriceScreen();
+}
+
+// ================================================================
+//  SCREEN 1.5 — Price
+// ================================================================
+function initPriceScreen() {
+  State.sessionId    = generateSessionId();
+  State.promoCode    = null;
+  State.promoDiscount = null;
+
+  showScreen('screen-price');
+  $('price-display-val').textContent = fmtPrice(State.photoPrice);
+
+  $('btn-go-payment').onclick = () => {
+    const { finalPrice, discountAmount } = calcFinalPrice(State.photoPrice, null);
+    initPaymentScreen(finalPrice, State.photoPrice, discountAmount, null);
+  };
+
+  $('btn-has-promo').onclick = () => initPromoScreen();
 }
 
 // ================================================================
 //  SCREEN 2 — Promo Code
 // ================================================================
 function initPromoScreen() {
-  // ── Start a fresh session ─────────────────────────────────
-  State.sessionId    = generateSessionId();
+  // Session fiyat ekranında açıldıysa koru, yoksa yeni oluştur
+  if (!State.sessionId) State.sessionId = generateSessionId();
   State.promoCode    = null;
   State.promoDiscount = null;
 
@@ -350,10 +369,8 @@ function initPromoScreen() {
     }
   };
 
-  // ── "Promosyon kodum yok" — full price, straight to payment ──
-  btnSkip.onclick = () => {
-    goToPayment(null, null);
-  };
+  // ── "Promosyon kodum yok" — fiyat ekranına geri dön ──
+  btnSkip.onclick = () => initPriceScreen();
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter')  btnSubmit.click();
@@ -465,7 +482,7 @@ async function initPaymentScreen(finalPrice, originalPrice, discountAmount, prom
 
   // ── Paid photo — run POS flow ─────────────────────────────
   // Wire the "Geri" button (always goes back to promo screen)
-  $('btn-payment-back').onclick = () => initPromoScreen();
+  $('btn-payment-back').onclick = () => initPriceScreen();
 
   // Start the POS attempt
   await _runPOSAttempt(finalPrice, originalPrice, discountAmount, promoCode);
@@ -495,7 +512,7 @@ async function _runPOSAttempt(finalPrice, originalPrice, discountAmount, promoCo
   };
 
   // Geri butonu her zaman Promo ekranına döner
-  $('btn-payment-back').onclick = () => initPromoScreen();
+  $('btn-payment-back').onclick = () => initPriceScreen();
 
   try {
     const posResult = await callInposGateway(

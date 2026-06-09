@@ -161,6 +161,50 @@ button:disabled {
 }
 
 /* ================================================================
+   SCREEN 1.5 — Price
+   ================================================================ */
+#screen-price {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 48%, #2a1c0e 0%, #100d09 65%);
+}
+
+.price-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 56px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(200, 150, 62, 0.06);
+}
+
+.price-amount {
+  font-size: clamp(52px, 8vw, 80px);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 2px;
+  font-family: 'Georgia', serif;
+  text-shadow: 0 0 40px var(--accent-glow);
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--text-mid);
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: color 0.2s;
+}
+
+.btn-link:hover {
+  color: var(--accent);
+}
+
+/* ================================================================
    SCREEN 1 — Start
    ================================================================ */
 #screen-start {
@@ -709,4 +753,70 @@ button:disabled {
 
 #screen-preview.active .preview-paper-wrap {
   animation: fadeUp 0.38s var(--ease) both;
+}
+
+/* ================================================================
+   PORTRAIT MODE
+   ================================================================ */
+@media (orientation: portrait) {
+
+  /* Genel içerik kolonu — tam genişlik kullan */
+  .screen-content {
+    max-width: 100%;
+    padding: 48px 36px;
+    gap: 24px;
+  }
+
+  /* Başlangıç ekranı logosu */
+  .brand-logo {
+    max-width: 75vw;
+  }
+
+  .brand-name {
+    font-size: clamp(40px, 10vw, 72px);
+    letter-spacing: 12px;
+  }
+
+  /* Kamera ekranı — portre için cover kullan, tam doldur */
+  #camera-preview {
+    object-fit: cover;
+  }
+
+  /* Thumbnail strip — portre ekranda daha büyük */
+  .thumb-slot {
+    width: 100px;
+    height: 76px;
+  }
+
+  /* Countdown rakamı */
+  #countdown-number {
+    font-size: clamp(160px, 22vw, 260px);
+  }
+
+  /* Önizleme ekranı padding */
+  .preview-screen-content {
+    padding: 20px 24px 20px;
+  }
+
+  /* Döndürülmüş görsel — portre ekran için kısıtlamalar */
+  .preview-paper {
+    /* CSS height → görsel genişlik, CSS width → görsel yükseklik */
+    max-height: 78vw;   /* görsel genişlik ≤ %78 ekran genişliği */
+    max-width: 65vh;    /* görsel yükseklik ≤ %65 ekran yüksekliği */
+  }
+
+  /* Yan logolar — portrette küçült */
+  .preview-side-logo {
+    width: 80px;
+  }
+
+  /* Ana önizleme satırı — aralığı azalt */
+  .preview-main-row {
+    gap: 18px;
+  }
+
+  /* Ödeme kartı */
+  .payment-card {
+    max-width: 90vw;
+  }
 }
