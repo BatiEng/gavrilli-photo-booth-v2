@@ -17,9 +17,7 @@ function createWindow() {
     title: 'Photo Booth',
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     backgroundColor: '#0d0d0d',
-    // Set to true for production kiosk use:
-    // fullscreen: true,
-    // kiosk: true,
+    fullscreen: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
