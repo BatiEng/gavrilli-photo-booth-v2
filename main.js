@@ -18,6 +18,7 @@ function createWindow() {
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     backgroundColor: '#0d0d0d',
     fullscreen: true,
+    kiosk: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
