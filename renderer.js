@@ -49,48 +49,10 @@ function fmtPrice(n) {
 }
 
 // ────────────────────────────────────────────
-// Audio — generated via Web Audio API (no files needed)
-// ────────────────────────────────────────────
-function getAudioCtx() {
-  if (!State.audioCtx) {
-    State.audioCtx = new AudioContext();
-  }
-  return State.audioCtx;
-}
-
-/**
- * Play a beep tone.
- * @param {number} freq      Hz
- * @param {number} duration  ms
- * @param {number} vol       0..1
- * @param {'sine'|'square'|'triangle'} type
- */
-function playTone(freq = 880, duration = 180, vol = 0.45, type = 'sine') {
-  return new Promise((resolve) => {
-    const ctx  = getAudioCtx();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
-    gain.gain.setValueAtTime(vol, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(
-      0.001, ctx.currentTime + duration / 1000
-    );
-
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + duration / 1000 + 0.05);
-    osc.onended = resolve;
-  });
-}
-
-const beepCountdown = () => playTone(880,  180, 0.50, 'sine');
-const beepShutter   = () => playTone(1500,  90, 0.55, 'square');
-const beepBetween   = () => playTone(660,  160, 0.35, 'sine');
+// Audio devre dışı
+const beepCountdown = () => Promise.resolve();
+const beepShutter   = () => Promise.resolve();
+const beepBetween   = () => Promise.resolve();
 
 // ────────────────────────────────────────────
 // Screen management
