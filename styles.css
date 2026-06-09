@@ -44,11 +44,13 @@ html, body {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s var(--ease);
+  overflow-y: auto;
 }
 
 .screen.active {
@@ -66,6 +68,8 @@ html, body {
   padding: 40px 48px;
   max-width: 580px;
   width: 100%;
+  /* margin: auto ile flex taşması durumunda bile ortalanır */
+  margin: auto;
 }
 
 /* ================================================================
@@ -335,6 +339,7 @@ button:disabled {
   justify-content: flex-start;
   background: #000;
   padding: 0;
+  overflow: hidden; /* kamera ekranı scroll olmasın */
 }
 
 /* ── Header ── */
@@ -538,6 +543,7 @@ button:disabled {
   padding: 22px 40px 24px;
   gap: 14px;
   justify-content: space-between;
+  margin: 0; /* margin:auto override — önizleme tam ekranı doldursun */
 }
 
 /* The paper image takes all available vertical space */
