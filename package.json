@@ -20,7 +20,8 @@
       "preload.js",
       "index.html",
       "styles.css",
-      "renderer.js"
+      "renderer.js",
+      "assets/**"
     ],
     "win": {
       "target": [
