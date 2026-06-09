@@ -15,6 +15,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     title: 'Photo Booth',
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     backgroundColor: '#0d0d0d',
     // Set to true for production kiosk use:
     // fullscreen: true,
