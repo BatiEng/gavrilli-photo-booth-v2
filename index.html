@@ -99,10 +99,15 @@
       <p id="payment-status" class="screen-desc">POS cihazına bağlanılıyor…</p>
       <p id="payment-sub" class="payment-sub"></p>
 
+      <!-- Cancel (shown while waiting for card tap) -->
+      <div class="action-row" id="payment-cancel-row" style="display:none">
+        <button id="btn-payment-cancel" class="btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> İptal Et</button>
+      </div>
+
       <!-- Retry / Back (hidden until error) -->
       <div class="action-row" id="payment-actions" style="display:none">
         <button id="btn-payment-retry" class="btn-primary">Tekrar Dene</button>
-        <button id="btn-payment-back"  class="btn-ghost">← Geri</button>
+        <button id="btn-payment-back"  class="btn-ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Geri</button>
       </div>
     </div>
   </section>
@@ -149,15 +154,18 @@
       <p class="screen-eyebrow">GAVRİLLİ PHOTO BOOTH</p>
       <h2 class="screen-title">Baskı Önizlemesi</h2>
 
-      <div id="preview-paper-wrap" class="preview-paper-wrap">
-        <img id="preview-composed" class="preview-paper" alt="Baskı önizlemesi" />
-        <p class="cut-hint">✂︎&nbsp; Kağıt ortadan kesilecektir</p>
+      <div class="preview-main-row">
+        <img class="preview-side-logo" src="assets/gavrilli.png" alt="" />
+
+        <div id="preview-paper-wrap" class="preview-paper-wrap">
+          <img id="preview-composed" class="preview-paper" alt="Baskı önizlemesi" />
+          <p class="cut-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>&nbsp; Kağıt ortadan kesilecektir</p>
+        </div>
+
+        <img class="preview-side-logo" src="assets/gavrilli.png" alt="" />
       </div>
 
-      <div class="action-row">
-        <button id="btn-retake" class="btn-ghost" disabled>↩ Yeniden Çek</button>
-        <button id="btn-print"  class="btn-primary" disabled>🖨&nbsp; Yazdır</button>
-      </div>
+      <p id="preview-countdown" class="preview-countdown">3 saniye içinde yazdırılıyor…</p>
 
     </div>
   </section>

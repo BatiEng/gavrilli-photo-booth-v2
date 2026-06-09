@@ -497,15 +497,42 @@ button:disabled {
 }
 
 /* The paper image takes all available vertical space */
-.preview-paper-wrap {
+/* Row that holds side logos + paper */
+.preview-main-row {
   flex: 1;
-  min-height: 0;          /* allow flex child to shrink below content size */
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+}
+
+.preview-side-logo {
+  width: 120px;
+  height: auto;
+  opacity: 0.9;
+  filter: brightness(0) invert(1); /* make it white */
+  flex-shrink: 0;
+}
+
+.preview-paper-wrap {
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  width: 100%;
+}
+
+.preview-countdown {
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-align: center;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 /*
@@ -516,14 +543,19 @@ button:disabled {
  */
 .preview-paper {
   display: block;
+  /*
+   * Rotated 90°: CSS width → visual height, CSS height → visual width.
+   * max-width limits visual height, max-height limits visual width.
+   */
+  max-width: 72vh;   /* visual height after rotation */
+  max-height: 52vw;  /* visual width after rotation  */
   width: auto;
   height: auto;
-  max-width: 100%;
-  max-height: calc(100% - 30px); /* subtract cut-hint height */
   border-radius: 2px;
   box-shadow:
     0 6px 40px rgba(0, 0, 0, 0.8),
     0 0 0 1px rgba(200, 150, 62, 0.1);
+  transform: rotate(90deg);
 }
 
 .cut-hint {
@@ -633,7 +665,9 @@ button:disabled {
 
 /* Result icon (checkmark / X / emoji shown after POS result) */
 .payment-result-icon {
-  font-size: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 .payment-result-icon--success {

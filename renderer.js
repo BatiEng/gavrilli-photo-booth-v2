@@ -3,11 +3,12 @@
 const CONFIG = {
   API_BASE:         'https://gavrilli.inovasyonbulutu.com/api',
 
-  POS_URL:          'http://localhost:9373/start-sale',
-  POS_PORT:         59000,
-  POS_PAYMENT_TYPE: 'CreditCardPayment',
+  // InPOS Gateway base URL (local bridge service)
+  POS_GW:           'http://localhost:9373/api/pos',
+  // 0 = Kredi Kartı, 1 = Nakit
+  POS_PAYMENT_TYPE: 0,
   POS_PRODUCT_NAME: 'Ürün Bedeli',
-  POS_KDV:          10,
+  POS_KDV_SECTION:  1,   // 1 = %10 KDV, 2 = %20 KDV
 
   POS_TIMEOUT_MS:   120_000,
 };
@@ -150,42 +151,132 @@ function calcFinalPrice(originalPrice, promoDiscount) {
 }
 
 /**
- * Call the local POS device.
- * Uses the exact request shape from the integration spec.
- * @param {number} price  Final price in TL
- * @returns {Promise<object>}
+ * Call the local InPOS Gateway (http://localhost:9373/api/pos).
+ *
+ * Full flow:
+ *   1. Status check → connect if needed
+ *   2. ECR state handling (InposEcrLogin, InposEcrSale, error states)
+ *   3. sale/start → sale/items → sale/end
+ *   4. Poll status until InposEcrMainMenu + lastSaleSucceeded
+ *
+ * @param {number}   price          Final price in TL
+ * @param {Function} onStatus       (state, message, subMessage?) — called to update the UI
+ * @param {AbortSignal} signal      AbortSignal from the caller (cancel button)
+ * @returns {Promise<{success:true}>}
+ * @throws {Error} on any failure (message is user-friendly Turkish)
  */
-async function callPOS(price) {
-  const controller = new AbortController();
-  const timer      = setTimeout(() => controller.abort(), CONFIG.POS_TIMEOUT_MS);
+async function callInposGateway(price, onStatus, signal) {
+  const GW = CONFIG.POS_GW;
 
-  try {
-    const res = await fetch(CONFIG.POS_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal:  controller.signal,
-      body:    JSON.stringify({
-        port:     CONFIG.POS_PORT,
-        odemeTip: CONFIG.POS_PAYMENT_TYPE,
-        products: [{
-          name:     CONFIG.POS_PRODUCT_NAME,
-          price:    price,
-          kdv:      CONFIG.POS_KDV,
-          quantity: 1,
-        }],
-      }),
-    });
+  /** Fetch wrapper — auto-throws on abort, parses JSON */
+  const apiFetch = async (method, path, body) => {
+    if (signal?.aborted) throw new DOMException('İptal edildi.', 'AbortError');
+    const opts = { method, headers: { 'Content-Type': 'application/json' }, signal };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const res = await fetch(GW + path, opts);
+    return res.json().catch(() => ({}));
+  };
 
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      throw new Error(`POS ${res.status}: ${txt || res.statusText}`);
+  // ── 1. Bağlantı durumu kontrol et ─────────────────────────────
+  onStatus?.('processing', 'POS cihazına bağlanılıyor…');
+
+  const statusRes = await apiFetch('GET', '/status');
+  if (!statusRes?.data?.connected) {
+    onStatus?.('processing', 'POS yapılandırması okunuyor…');
+    const cfgRes = await apiFetch('GET', '/config');
+    if (!cfgRes?.success) throw new Error('POS yapılandırması okunamadı. appsettings.json dosyasını kontrol edin.');
+
+    const connectRes = await apiFetch('POST', '/connect', cfgRes.data);
+    if (!connectRes.success) throw new Error(connectRes.errorMessage || 'POS bağlantısı kurulamadı.');
+  }
+
+  // ── 2. ECR state kontrolü ──────────────────────────────────────
+  onStatus?.('processing', 'Yazarkasa durumu kontrol ediliyor…');
+  const preStateRes = await apiFetch('GET', '/status');
+  const preEcrState = preStateRes?.data?.ecrState;
+
+  if (preEcrState === 'InposEcrSale') {
+    // Önceki yarım kalan satışı iptal et
+    await apiFetch('POST', '/sale/cancel', {}).catch(() => {});
+    await sleep(1000);
+  } else if (preEcrState === 'InposEcrLogin') {
+    onStatus?.('processing', 'Yazarkasaya giriş yapılıyor…');
+    const loginRes = await apiFetch('POST', '/login', {});
+    if (!loginRes?.success) throw new Error('Yazarkasaya kasiyer girişi yapılamadı.');
+    await sleep(500);
+  } else if (preEcrState === 'InposEcrZReportRequired') {
+    throw new Error('Yazarkasada Z raporu zorunlu. Lütfen Z raporunu alıp tekrar deneyin.');
+  } else if (['InposEcrInitialization', 'InposEcrNotUsable', 'InposEcrError'].includes(preEcrState)) {
+    throw new Error(`Yazarkasa kullanıma hazır değil: ${preEcrState}`);
+  }
+
+  // ── 3. Satış başlat ────────────────────────────────────────────
+  onStatus?.('processing', 'Satış başlatılıyor…');
+  const startRes = await apiFetch('POST', '/sale/start', {});
+  if (!startRes.success) throw new Error(startRes.errorMessage || 'Satış başlatılamadı.');
+
+  // ── 4. Ürün ekle ───────────────────────────────────────────────
+  const itemPayload = {
+    name:       CONFIG.POS_PRODUCT_NAME,
+    unitPrice:  Math.round(price * 100),   // kuruş cinsinden
+    multiplier: 1000,                       // 1 adet = 1 × 1000
+    section:    CONFIG.POS_KDV_SECTION,
+    unit:       0,
+  };
+  const itemRes = await apiFetch('POST', '/sale/items', itemPayload);
+  if (!itemRes.success) {
+    await apiFetch('POST', '/sale/cancel', {}).catch(() => {});
+    throw new Error(itemRes.errorMessage || 'Ürün satışa eklenemedi.');
+  }
+
+  // ── 5. Satışı sonlandır (ödeme talebi POS'a gönderilir) ───────
+  const endRes = await apiFetch('POST', '/sale/end', { paymentType: CONFIG.POS_PAYMENT_TYPE });
+  if (!endRes.success) {
+    await apiFetch('POST', '/sale/cancel', {}).catch(() => {});
+    throw new Error(endRes.errorMessage || 'Satış sonlandırılamadı.');
+  }
+
+  // ── 6. Müşteri kartı bekle — İptal butonu aktif ───────────────
+  onStatus?.('waiting', 'Ödeme POS cihazına gönderildi', 'Kartınızı okutun veya "İptal Et" butonuna basın.');
+
+  // ── 7. Sonuç için poll (max POS_TIMEOUT_MS) ───────────────────
+  const deadline = Date.now() + CONFIG.POS_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    if (signal?.aborted) {
+      // Kullanıcı iptal etti — POS tarafını da iptal et
+      await fetch(GW + '/sale/cancel', { method: 'POST', body: '{}',
+        headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+      throw new DOMException('Ödeme kullanıcı tarafından iptal edildi.', 'AbortError');
     }
 
-    return await res.json().catch(() => ({ status: 'success' }));
+    await sleep(2000);
 
-  } finally {
-    clearTimeout(timer);
+    const stateRes = await apiFetch('GET', '/status');
+    const ecrState        = stateRes?.data?.ecrState;
+    const lastSaleSucceeded = stateRes?.data?.lastSaleSucceeded;
+
+    if (ecrState !== 'InposEcrMainMenu') {
+      // Yazarkasa hâlâ işlem yapıyor — totals isteği ile zaman aşımını önle
+      apiFetch('GET', '/sale/totals').catch(() => {});
+      continue;
+    }
+
+    if (lastSaleSucceeded === true)  return { success: true };
+    if (lastSaleSucceeded === false) throw new Error('Ödeme reddedildi veya iptal edildi.');
+
+    // lastSaleSucceeded === null → birkaç kez daha dene
+    for (let i = 0; i < 3; i++) {
+      await sleep(1500);
+      const retryRes = await apiFetch('GET', '/status');
+      const retrySucceeded = retryRes?.data?.lastSaleSucceeded;
+      if (retrySucceeded === true)  return { success: true };
+      if (retrySucceeded === false) throw new Error('Ödeme reddedildi veya iptal edildi.');
+    }
+    throw new Error('Satış sonucu alınamadı. Lütfen yazarkasa fişini kontrol edin ve manuel olarak kaydedin.');
   }
+
+  throw new Error(`İşlem zaman aşımına uğradı (${CONFIG.POS_TIMEOUT_MS / 1000} sn).`);
 }
 
 /**
@@ -324,6 +415,7 @@ function setPaymentState(state, message = '', subMessage = '') {
   const resultIcon = $('payment-result-icon');
   const statusEl   = $('payment-status');
   const actionsEl  = $('payment-actions');
+  const cancelRow  = $('payment-cancel-row');
   const subEl      = $('payment-sub');
 
   // ── Reset all visual state first ──────────────────────────
@@ -331,40 +423,44 @@ function setPaymentState(state, message = '', subMessage = '') {
   resultIcon.style.display = 'none';   // hide icon by default
   resultIcon.textContent   = '';
   resultIcon.className     = 'payment-result-icon';
-  actionsEl.style.display  = 'none';   // hide buttons by default
+  actionsEl.style.display  = 'none';   // hide retry/back by default
+  cancelRow.style.display  = 'none';   // hide cancel by default
 
   switch (state) {
 
     case 'processing':
-      statusEl.textContent  = message || 'POS cihazına bağlanılıyor…';
+      statusEl.textContent = message || 'POS cihazına bağlanılıyor…';
       break;
 
     case 'waiting':
-      statusEl.textContent  = message || 'Lütfen kartınızı okutun…';
+      // Ödeme POS'a gönderildi — müşteri kart okutacak, İptal butonu göster
+      statusEl.textContent    = message || 'Ödeme POS cihazına gönderildi';
+      cancelRow.style.display = 'flex';
       break;
 
     case 'success':
-      spinner.style.display      = 'none';
-      resultIcon.style.display   = '';
-      resultIcon.textContent     = '✓';
+      spinner.style.display    = 'none';
+      resultIcon.style.display = '';
+      resultIcon.innerHTML     = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       resultIcon.classList.add('payment-result-icon--success');
-      statusEl.textContent       = message || 'Ödeme başarılı!';
+      statusEl.textContent     = message || 'Ödeme başarılı!';
       break;
 
     case 'free':
-      spinner.style.display      = 'none';
-      resultIcon.style.display   = '';
-      resultIcon.textContent     = '🎉';
-      statusEl.textContent       = message || 'Ücretsiz fotoğraf!';
+      spinner.style.display    = 'none';
+      resultIcon.style.display = '';
+      resultIcon.innerHTML     = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      resultIcon.classList.add('payment-result-icon--success');
+      statusEl.textContent     = message || 'Ücretsiz fotoğraf!';
       break;
 
     case 'error':
-      spinner.style.display      = 'none';
-      resultIcon.style.display   = '';
-      resultIcon.textContent     = '✗';
+      spinner.style.display    = 'none';
+      resultIcon.style.display = '';
+      resultIcon.innerHTML     = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
       resultIcon.classList.add('payment-result-icon--error');
-      statusEl.textContent       = message || 'Ödeme başarısız';
-      actionsEl.style.display    = 'flex'; // show Retry / Back buttons
+      statusEl.textContent     = message || 'Ödeme başarısız';
+      actionsEl.style.display  = 'flex'; // Tekrar Dene / Geri
       break;
   }
 
@@ -415,22 +511,40 @@ async function initPaymentScreen(finalPrice, originalPrice, discountAmount, prom
 
 /**
  * Perform one POS attempt.
- * On error, shows the error state and wires the Retry button for another try.
+ *
+ * Uses callInposGateway() for the full InPOS protocol.
+ * - During connection/setup: shows 'processing' state
+ * - After sale/end sent to device: shows 'waiting' state with İptal button
+ * - On success: shows 'success' state, then proceeds to capture
+ * - On failure/cancel: shows 'error' state with Retry + Back buttons
  */
 async function _runPOSAttempt(finalPrice, originalPrice, discountAmount, promoCode) {
-  setPaymentState('processing', 'POS cihazına bağlanılıyor…');
+  // AbortController — İptal Et butonu bunu tetikler
+  const controller = new AbortController();
 
-  // Small settle delay so the screen transition is visible
-  await sleep(350);
-  setPaymentState('waiting', 'Lütfen kartınızı okutun…');
+  // İptal Et butonunu sıfırla ve bağla
+  const cancelBtn = $('btn-payment-cancel');
+  cancelBtn.disabled    = false;
+  cancelBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> İptal Et';
+  cancelBtn.onclick = () => {
+    cancelBtn.disabled    = true;
+    cancelBtn.textContent = 'İptal ediliyor…';
+    controller.abort();
+  };
+
+  // Geri butonu her zaman Promo ekranına döner
+  $('btn-payment-back').onclick = () => initPromoScreen();
 
   try {
-    const posResult = await callPOS(finalPrice);
+    const posResult = await callInposGateway(
+      finalPrice,
+      (state, message, subMessage) => setPaymentState(state, message, subMessage),
+      controller.signal
+    );
 
-    // ── POS reported success ──────────────────────────────────
+    // ── Başarılı ──────────────────────────────────────────────
     setPaymentState('success', 'Ödeme başarılı!');
 
-    // Save to backend (non-blocking; POS already charged)
     await savePayment({ originalPrice, discountAmount, finalPrice,
                         promoCode, posStatus: 'success', posResponse: posResult });
 
@@ -438,25 +552,23 @@ async function _runPOSAttempt(finalPrice, originalPrice, discountAmount, promoCo
     initCaptureScreen();
 
   } catch (err) {
-    // ── POS failed / timeout ──────────────────────────────────
+    // ── Hata / iptal / zaman aşımı ────────────────────────────
     console.error('[POS]', err);
 
     let msg = 'Ödeme gerçekleştirilemedi.';
     if (err.name === 'AbortError') {
-      msg = 'POS cihazı yanıt vermedi (zaman aşımı).';
+      msg = 'Ödeme iptal edildi.';
     } else if (err.message) {
-      // Truncate long system errors for the kiosk display
-      msg = err.message.length > 80 ? err.message.slice(0, 80) + '…' : err.message;
+      msg = err.message.length > 90 ? err.message.slice(0, 90) + '…' : err.message;
     }
 
-    // Record failed attempt
     await savePayment({ originalPrice, discountAmount, finalPrice,
                         promoCode, posStatus: 'failed',
                         posResponse: { error: String(err.message) } });
 
-    // Show error UI and wire Retry
     setPaymentState('error', msg, 'Tekrar denemek için "Tekrar Dene" butonuna basın.');
 
+    // Retry — yeni AbortController ile tekrar dene
     $('btn-payment-retry').onclick = () =>
       _runPOSAttempt(finalPrice, originalPrice, discountAmount, promoCode);
   }
@@ -675,8 +787,9 @@ function stopCamera() {
 async function initPreviewScreen(pendingCompose = null) {
   showScreen('screen-preview');
 
-  $('btn-retake').disabled = true;
-  $('btn-print').disabled  = true;
+  // Reset countdown text
+  const countdownEl = $('preview-countdown');
+  if (countdownEl) countdownEl.textContent = '3 saniye içinde yazdırılıyor…';
 
   try {
     const canvas = await (pendingCompose ?? composePhotos());
@@ -686,14 +799,20 @@ async function initPreviewScreen(pendingCompose = null) {
     console.error('[Compose preview]', err);
   }
 
-  $('btn-retake').disabled = false;
-  $('btn-print').disabled  = !State.composedDataUrl;
-
-  $('btn-retake').onclick = () => {
-    State.composedDataUrl = null;
-    initCaptureScreen();
-  };
-  $('btn-print').onclick = () => startPrintFlow();
+  // Countdown: 3 → 2 → 1 → yazdır
+  let remaining = 3;
+  const tick = setInterval(() => {
+    remaining -= 1;
+    if (countdownEl) {
+      countdownEl.textContent = remaining > 0
+        ? `${remaining} saniye içinde yazdırılıyor…`
+        : 'Yazdırılıyor…';
+    }
+    if (remaining <= 0) {
+      clearInterval(tick);
+      startPrintFlow();
+    }
+  }, 1000);
 }
 
 // ================================================================
@@ -716,7 +835,7 @@ async function startPrintFlow() {
       openBrowserPrint(dataUrl);
     }
 
-    setPrintStatus('✓ Yazdırıldı!', true);
+    setPrintStatus('Yazdırıldı!', true);
     $('print-spinner').style.display = 'none';
 
     // Auto-restart after 5 s
