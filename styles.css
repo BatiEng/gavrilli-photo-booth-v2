@@ -402,8 +402,6 @@ button:disabled {
   overflow: hidden;
   background: #000;
   min-height: 0;
-  /* Dikey ekranda ekranın tamamını kaplamaması için */
-  max-height: 60vh;
 }
 
 #camera-preview {
@@ -796,13 +794,7 @@ button:disabled {
     justify-content: flex-start;
   }
 
-  /* Kamera sarmalayıcı — portrette fazla yer kaplamasın */
-  .camera-wrap {
-    max-height: 52vh;
-    flex: 0 0 52vh;
-  }
-
-  /* Kamera — portre için cover kullan, tam doldur */
+  /* Kamera — portre için cover kullan */
   #camera-preview {
     object-fit: cover;
     width: 100%;
