@@ -335,6 +335,49 @@ button:disabled {
   font-size: 13px;
 }
 
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin: 4px 0;
+}
+
+.numpad-key {
+  padding: 18px 10px;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--tr);
+  user-select: none;
+}
+
+.numpad-key:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.numpad-key:active {
+  transform: scale(0.94);
+}
+
+.numpad-back {
+  font-size: 20px;
+}
+
+.numpad-clear {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
 /* ================================================================
    SCREEN 3 — Capture
    ================================================================ */

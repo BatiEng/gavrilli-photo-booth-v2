@@ -318,6 +318,21 @@ function initPromoScreen() {
   btnSubmit.textContent = 'Devam Et';
   input.focus();
 
+  // ── Numpad ────────────────────────────────────────────────
+  document.querySelectorAll('.numpad-key').forEach(btn => {
+    btn.onclick = () => {
+      const val = btn.dataset.val;
+      errorEl.textContent = '';
+      if (val === 'back') {
+        input.value = input.value.slice(0, -1);
+      } else if (val === 'clear') {
+        input.value = '';
+      } else if (input.value.length < 20) {
+        input.value += val;
+      }
+    };
+  });
+
   // ── Helper: advance to payment ────────────────────────────
   function goToPayment(code, discount) {
     State.promoCode     = code;
