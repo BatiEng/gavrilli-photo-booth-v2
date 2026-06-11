@@ -914,7 +914,10 @@ async function initPreviewScreen(pendingCompose = null) {
     console.error("[Compose preview]", err);
   }
 
-  // Countdown: 14 → 1 → print
+  // Yazdırmayı hemen arka planda başlat
+  startPrintFlow();
+
+  // Countdown: 14 → 1 → screen-printing'e geç
   let remaining = 14;
   const tick = setInterval(() => {
     remaining -= 1;
@@ -922,11 +925,11 @@ async function initPreviewScreen(pendingCompose = null) {
       countdownEl.textContent =
         remaining > 0
           ? `${remaining} saniye içinde yazdırılıyor…`
-          : "Yazdırılıyor…";
+          : "Yazdırıldı!";
     }
     if (remaining <= 0) {
       clearInterval(tick);
-      startPrintFlow();
+      showScreen("screen-printing");
     }
   }, 1000);
 }
@@ -935,15 +938,11 @@ async function initPreviewScreen(pendingCompose = null) {
 //  SCREEN 5 — Print
 // ================================================================
 async function startPrintFlow() {
-  showScreen("screen-printing");
-  $("print-spinner").style.display = "";
-  setPrintStatus("Yazdırılıyor…", false);
-
+  // Arka planda yazdır — ekranı değiştirme, sadece işi yap.
+  // Countdown bitince showScreen("screen-printing") zaten çağrılır.
   try {
     const dataUrl = State.composedDataUrl;
     if (!dataUrl) throw new Error("Görüntü bulunamadı");
-
-    setPrintStatus("Yazdırılıyor…", false);
 
     if (
       window.electronAPI &&
@@ -954,12 +953,14 @@ async function startPrintFlow() {
       openBrowserPrint(dataUrl);
     }
 
+    // Yazdırma tamamlandı — screen-printing ekranı açıldığında
+    // spinner'ı gizle ve başarı UI'ını göster
     $("print-spinner").style.display = "none";
     $("print-logo").style.display = "";
     $("printing-thanks").style.display = "";
     setPrintStatus("Fotoğrafınız hazır!", true);
 
-    // Auto-restart after 5 s
+    // 5 sn sonra anasayfaya dön
     setTimeout(() => {
       State.photos = [];
       State.promoCode = null;
@@ -975,10 +976,13 @@ async function startPrintFlow() {
     $("printing-sub").textContent = err.message || "Bilinmeyen hata";
 
     setTimeout(() => {
-      showScreen("screen-preview");
-      $("btn-retake").disabled = false;
-      $("btn-print").disabled = false;
-    }, 3500);
+      State.photos = [];
+      State.promoCode = null;
+      State.promoDiscount = null;
+      State.composedDataUrl = null;
+      State.sessionId = null;
+      initStartScreen();
+    }, 4000);
   }
 }
 
