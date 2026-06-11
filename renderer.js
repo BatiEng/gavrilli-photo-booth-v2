@@ -1064,12 +1064,8 @@ async function composePhotos() {
   const photoW = Math.floor((W - 2 * MARGIN - 4 * H_GAP) / 4.25);
   const logoColW = Math.floor(photoW / 4);
 
-  // photoH: sabit formül (599px)
-  const photoH = Math.floor((H - 2 * MARGIN - V_GAP) / ROWS);
-
-  // Her satırı kendi halfH'si içinde dikey ortala
-  // (portrait modda sol/sağ kenar eşit görünsün)
-  const rowVMargin = Math.floor((halfH - photoH) / 2); // ~10px
+  // photoH: her row tam olarak halfH'yi kaplar → portrait'te her iki kenar da beyaz olur
+  const photoH = halfH;
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -1096,13 +1092,13 @@ async function composePhotos() {
   const logoX = MARGIN + COLS * (photoW + H_GAP);
 
   for (let row = 0; row < ROWS; row++) {
-    const rowY = row * halfH + rowVMargin;
+    const rowY = row * halfH; // Her row tam halfH'den başlar, gri margin yok
 
     for (let col = 0; col < COLS; col++) {
       const x = MARGIN + col * (photoW + H_GAP);
 
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x, rowY, photoW, photoH);
+      ctx.fillRect(x, rowY, photoW, photoH); // Beyaz arka plan tam halfH yüksekliğinde
 
       drawCropped(ctx, rotated[col], x + FRAME, rowY + FRAME, photoW - 2 * FRAME, photoH - 2 * FRAME);
     }
