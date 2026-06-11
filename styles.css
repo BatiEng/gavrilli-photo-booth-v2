@@ -613,9 +613,8 @@ button:disabled {
 /* Common strip styles */
 .preview-strip {
   position: absolute;
-  bottom: 30%;            /* V pivot sits in the lower-third of the wrap */
-  margin-bottom: 0;
-  height: 64vh;
+  bottom: 38%;
+  height: 56vh;
   width: auto;
   border-radius: 4px;
   box-shadow:
@@ -623,21 +622,19 @@ button:disabled {
     0 0 0 1px rgba(200, 150, 62, 0.15);
 }
 
-/* Left strip: pivot at bottom-right corner, lean left.
-   right: calc(50% - Xpx) → right edge is X px RIGHT of center.
-   Large X = bottoms deeply overlap, arka şeridin alt fotoğrafı önde kalır. */
+/* Left strip — 13° keeps strips within screen width on portrait */
 .preview-strip--left {
-  right: calc(50% - 60px);
+  right: calc(50% - 55px);
   transform-origin: bottom right;
-  transform: rotate(-22deg);
+  transform: rotate(-13deg);
   z-index: 1;
 }
 
-/* Right strip: pivot at bottom-left corner, lean right */
+/* Right strip */
 .preview-strip--right {
-  left: calc(50% - 60px);
+  left: calc(50% - 55px);
   transform-origin: bottom left;
-  transform: rotate(22deg);
+  transform: rotate(13deg);
   z-index: 2;
 }
 
@@ -890,8 +887,8 @@ button:disabled {
 
   /* Önizleme V ekranı — portre için şerit yüksekliği */
   .preview-strip {
-    height: 54vh;
-    bottom: 50px;
+    height: 50vh;
+    bottom: 35%;
   }
 
   /* Ödeme kartı */
