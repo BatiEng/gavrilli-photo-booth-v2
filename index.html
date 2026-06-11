@@ -177,26 +177,19 @@
   </section>
 
   <!-- ══════════════════════════════════════════════
-       SCREEN 4 — Preview (paper layout)
+       SCREEN 4 — Preview (V-shape strip hold)
        ══════════════════════════════════════════════ -->
   <section id="screen-preview" class="screen">
-    <div class="screen-content preview-screen-content">
+    <div class="preview-v-screen">
 
-      <p class="screen-eyebrow">GAVRİLLİ PHOTO BOOTH</p>
-      <h2 class="screen-title">Baskı Önizlemesi</h2>
+      <p class="screen-eyebrow preview-eyebrow">GAVRİLLİ PHOTO BOOTH</p>
 
-      <div class="preview-main-row">
-        <img class="preview-side-logo" src="assets/gavrilli.png" alt="" />
-
-        <div id="preview-paper-wrap" class="preview-paper-wrap">
-          <img id="preview-composed" class="preview-paper" alt="Baskı önizlemesi" />
-          <p class="cut-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>&nbsp; Kağıt ortadan kesilecektir</p>
-        </div>
-
-        <img class="preview-side-logo" src="assets/gavrilli.png" alt="" />
+      <div class="preview-v-wrap">
+        <img id="preview-strip-left"  class="preview-strip preview-strip--left"  alt="" />
+        <img id="preview-strip-right" class="preview-strip preview-strip--right" alt="" />
       </div>
 
-      <p id="preview-countdown" class="preview-countdown">3 saniye içinde yazdırılıyor…</p>
+      <p id="preview-countdown" class="preview-countdown">14 saniye içinde yazdırılıyor…</p>
 
     </div>
   </section>
@@ -205,10 +198,12 @@
        SCREEN 5 — Printing / Done
        ══════════════════════════════════════════════ -->
   <section id="screen-printing" class="screen">
-    <div class="screen-content">
+    <div class="screen-content printing-content">
       <div id="print-spinner" class="spinner"></div>
+      <img id="print-logo" class="print-logo" src="assets/gavrilli.png" alt="Gavrilli" style="display:none" />
       <h2 id="printing-status-text" class="screen-title">Yazdırılıyor…</h2>
       <p id="printing-sub" class="screen-desc">Lütfen bekleyin</p>
+      <p id="printing-thanks" class="printing-thanks" style="display:none">Fotoğrafınız yazdırıldı, teşekkürler</p>
     </div>
   </section>
 
