@@ -1052,13 +1052,20 @@ async function composePhotos() {
   const FRAME = 8;
   const COLS = 4;
   const ROWS = 2;
+  const halfH = Math.floor(H / 2); // 620 — her strip'in yüksekliği
 
-  // Logo sütunu genişliği = fotoğraf genişliğinin 1/4'ü
+  // Logo sütunu genişliği = photoW / 4
   // 4*photoW + 3*H_GAP + H_GAP + logoW = W - 2*MARGIN, logoW = photoW/4
   // => 4.25 * photoW + 4 * H_GAP = W - 2*MARGIN
   const photoW = Math.floor((W - 2 * MARGIN - 4 * H_GAP) / 4.25);
-  const photoH = Math.floor((H - 2 * MARGIN - (ROWS - 1) * V_GAP) / ROWS);
   const logoColW = Math.floor(photoW / 4);
+
+  // photoH: sabit formül (599px)
+  const photoH = Math.floor((H - 2 * MARGIN - V_GAP) / ROWS);
+
+  // Her satırı kendi halfH'si içinde dikey ortala
+  // (portrait modda sol/sağ kenar eşit görünsün)
+  const rowVMargin = Math.floor((halfH - photoH) / 2); // ~10px
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -1073,41 +1080,38 @@ async function composePhotos() {
   ctx.strokeStyle = "rgba(0,0,0,0.18)";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(0, H / 2);
-  ctx.lineTo(W, H / 2);
+  ctx.moveTo(0, halfH);
+  ctx.lineTo(W, halfH);
   ctx.stroke();
   ctx.restore();
 
   const rotated = images.map((img) => rotateImage(img, -90));
 
+  // Logo -90° döndür: strip +90° rotasyonundan sonra portrait'te dik görünsün
+  const rotatedLogo = logoImg ? rotateImage(logoImg, -90) : null;
+  const logoX = MARGIN + COLS * (photoW + H_GAP);
+
   for (let row = 0; row < ROWS; row++) {
+    const rowY = row * halfH + rowVMargin;
+
     for (let col = 0; col < COLS; col++) {
       const x = MARGIN + col * (photoW + H_GAP);
-      const y = MARGIN + row * (photoH + V_GAP);
 
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x, y, photoW, photoH);
+      ctx.fillRect(x, rowY, photoW, photoH);
 
-      const px = x + FRAME;
-      const py = y + FRAME;
-      const pw = photoW - 2 * FRAME;
-      const ph = photoH - 2 * FRAME;
-      drawCropped(ctx, rotated[col], px, py, pw, ph);
+      drawCropped(ctx, rotated[col], x + FRAME, rowY + FRAME, photoW - 2 * FRAME, photoH - 2 * FRAME);
     }
-  }
 
-  // Logo sütunu — fotoğrafların sağında, tüm yüksekliği kaplıyor
-  const logoX = MARGIN + COLS * (photoW + H_GAP);
-  const logoY = MARGIN;
-  const logoAreaH = H - 2 * MARGIN;
-
-  if (logoImg) {
-    const scale = Math.min(logoColW / logoImg.width, logoAreaH / logoImg.height);
-    const lw = Math.round(logoImg.width * scale);
-    const lh = Math.round(logoImg.height * scale);
-    const lx = logoX + Math.round((logoColW - lw) / 2);
-    const ly = logoY + Math.round((logoAreaH - lh) / 2);
-    ctx.drawImage(logoImg, lx, ly, lw, lh);
+    // Her strip için ayrı logo
+    if (rotatedLogo) {
+      const scale = Math.min(logoColW / rotatedLogo.width, photoH / rotatedLogo.height);
+      const lw = Math.round(rotatedLogo.width * scale);
+      const lh = Math.round(rotatedLogo.height * scale);
+      const lx = logoX + Math.round((logoColW - lw) / 2);
+      const ly = rowY + Math.round((photoH - lh) / 2);
+      ctx.drawImage(rotatedLogo, lx, ly, lw, lh);
+    }
   }
 
   return canvas;
