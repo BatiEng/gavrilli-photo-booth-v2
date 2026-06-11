@@ -1035,13 +1035,6 @@ async function composePhotos() {
     ),
   );
 
-  const logoImg = await new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = "assets/logo-siyah.png";
-  });
-
   await new Promise((r) => setTimeout(r, 30));
 
   const W = 1843;
@@ -1053,12 +1046,8 @@ async function composePhotos() {
   const COLS = 4;
   const ROWS = 2;
 
-  // Logo sütunu genişliği = fotoğraf genişliğinin 1/4'ü
-  // 4*photoW + 3*H_GAP + H_GAP + logoW = W - 2*MARGIN, logoW = photoW/4
-  // => 4.25 * photoW + 4 * H_GAP = W - 2*MARGIN
-  const photoW = Math.floor((W - 2 * MARGIN - 4 * H_GAP) / 4.25);
+  const photoW = Math.floor((W - 2 * MARGIN - (COLS - 1) * H_GAP) / COLS);
   const photoH = Math.floor((H - 2 * MARGIN - (ROWS - 1) * V_GAP) / ROWS);
-  const logoColW = Math.floor(photoW / 4);
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -1093,24 +1082,39 @@ async function composePhotos() {
       const pw = photoW - 2 * FRAME;
       const ph = photoH - 2 * FRAME;
       drawCropped(ctx, rotated[col], px, py, pw, ph);
+
+      if (col === COLS - 1) {
+        drawGavrilliWatermark(ctx, px, py, pw, ph);
+      }
     }
   }
 
-  // Logo sütunu — fotoğrafların sağında, tüm yüksekliği kaplıyor
-  const logoX = MARGIN + COLS * (photoW + H_GAP);
-  const logoY = MARGIN;
-  const logoAreaH = H - 2 * MARGIN;
-
-  if (logoImg) {
-    const scale = Math.min(logoColW / logoImg.width, logoAreaH / logoImg.height);
-    const lw = Math.round(logoImg.width * scale);
-    const lh = Math.round(logoImg.height * scale);
-    const lx = logoX + Math.round((logoColW - lw) / 2);
-    const ly = logoY + Math.round((logoAreaH - lh) / 2);
-    ctx.drawImage(logoImg, lx, ly, lw, lh);
-  }
-
   return canvas;
+}
+
+function drawGavrilliWatermark(ctx, x, y, w, h) {
+  const fontSize = Math.max(16, Math.round(h * 0.052));
+  const padRight = Math.round(fontSize * 0.3);
+  const padTop = Math.round(fontSize * 0.5);
+
+  ctx.save();
+
+  ctx.translate(x + w - padRight, y + padTop);
+  ctx.rotate(-Math.PI / 2);
+
+  ctx.font = `italic 700 ${fontSize}px Georgia, 'Times New Roman', serif`;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+
+  ctx.shadowColor = "rgba(0, 0, 0, 0.60)";
+  ctx.shadowBlur = Math.round(fontSize * 0.5);
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+  ctx.fillText("gavrilli", 0, 0);
+
+  ctx.restore();
 }
 
 function rotateImage(img, degrees) {
