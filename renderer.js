@@ -21,6 +21,8 @@ const State = {
   audioCtx: null, // AudioContext | null
   isCapturing: false,
   composedDataUrl: null, // cached composed image dataURL
+  printResult: null,    // 'success' | 'error' | null
+  printError: null,     // error message string
   photoPrice: 200, // base price loaded from API at startup; fallback = 200
   sessionId: null, // hex string, generated at the start of each session
 };
@@ -914,10 +916,10 @@ async function initPreviewScreen(pendingCompose = null) {
     console.error("[Compose preview]", err);
   }
 
-  // Yazdırmayı hemen arka planda başlat
+  // Yazdırmayı hemen arka planda başlat (navigasyon yapmaz)
   startPrintFlow();
 
-  // Countdown: 14 → 1 → screen-printing'e geç
+  // Countdown: 14 → 1 → yazdırıldı ekranı → anasayfa
   let remaining = 14;
   const tick = setInterval(() => {
     remaining -= 1;
@@ -929,7 +931,7 @@ async function initPreviewScreen(pendingCompose = null) {
     }
     if (remaining <= 0) {
       clearInterval(tick);
-      showScreen("screen-printing");
+      showPrintDoneScreen();
     }
   }, 1000);
 }
@@ -937,9 +939,14 @@ async function initPreviewScreen(pendingCompose = null) {
 // ================================================================
 //  SCREEN 5 — Print
 // ================================================================
+
+/**
+ * Sadece yazdırma işini yapar. Navigasyon yapmaz, timeout kurmaz.
+ * Sonucu State.printResult'a yazar; showPrintDoneScreen() okur.
+ */
 async function startPrintFlow() {
-  // Arka planda yazdır — ekranı değiştirme, sadece işi yap.
-  // Countdown bitince showScreen("screen-printing") zaten çağrılır.
+  State.printResult = null; // 'success' | 'error'
+
   try {
     const dataUrl = State.composedDataUrl;
     if (!dataUrl) throw new Error("Görüntü bulunamadı");
@@ -953,37 +960,43 @@ async function startPrintFlow() {
       openBrowserPrint(dataUrl);
     }
 
-    // Yazdırma tamamlandı — screen-printing ekranı açıldığında
-    // spinner'ı gizle ve başarı UI'ını göster
+    State.printResult = "success";
+  } catch (err) {
+    console.error("[Print]", err);
+    State.printResult = "error";
+    State.printError = err.message || "Bilinmeyen hata";
+  }
+}
+
+/**
+ * 14 sn sonra çağrılır. Sonucu gösterir, 5 sn bekler, anasayfaya döner.
+ */
+function showPrintDoneScreen() {
+  showScreen("screen-printing");
+
+  if (State.printResult === "success") {
     $("print-spinner").style.display = "none";
     $("print-logo").style.display = "";
     $("printing-thanks").style.display = "";
     setPrintStatus("Fotoğrafınız hazır!", true);
-
-    // 5 sn sonra anasayfaya dön
-    setTimeout(() => {
-      State.photos = [];
-      State.promoCode = null;
-      State.promoDiscount = null;
-      State.composedDataUrl = null;
-      State.sessionId = null;
-      initStartScreen();
-    }, 5000);
-  } catch (err) {
-    console.error("[Print]", err);
+  } else if (State.printResult === "error") {
     $("print-spinner").style.display = "none";
     setPrintStatus("Yazdırma hatası", true);
-    $("printing-sub").textContent = err.message || "Bilinmeyen hata";
-
-    setTimeout(() => {
-      State.photos = [];
-      State.promoCode = null;
-      State.promoDiscount = null;
-      State.composedDataUrl = null;
-      State.sessionId = null;
-      initStartScreen();
-    }, 4000);
+    $("printing-sub").textContent = State.printError || "Bilinmeyen hata";
   }
+  // printResult null ise yazdırma hâlâ devam ediyor — spinner görünür kalır,
+  // tamamlanınca yukarıdaki state güncellemeleri zaten yapılmış olur.
+
+  setTimeout(() => {
+    State.photos = [];
+    State.promoCode = null;
+    State.promoDiscount = null;
+    State.composedDataUrl = null;
+    State.printResult = null;
+    State.printError = null;
+    State.sessionId = null;
+    initStartScreen();
+  }, 5000);
 }
 
 function setPrintStatus(msg, hideSub) {
