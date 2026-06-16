@@ -1085,7 +1085,7 @@ async function composePhotos() {
   canvas.height = H;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#d8d8d8";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, W, H);
 
   ctx.save();
@@ -1110,11 +1110,15 @@ async function composePhotos() {
     for (let col = 0; col < COLS; col++) {
       const x = MARGIN + col * (photoW + H_GAP);
 
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x, rowY, photoW, photoH); // Beyaz arka plan tam halfH yüksekliğinde
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(x, rowY, photoW, photoH); // Siyah arka plan tam halfH yüksekliğinde
 
       drawCropped(ctx, rotated[col], x + FRAME, rowY + FRAME, photoW - 2 * FRAME, photoH - 2 * FRAME);
     }
+
+    // Logo alanı beyaz arka plan (logo siyah olduğu için)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(logoX, rowY, logoColW, photoH);
 
     // Her strip için ayrı logo
     if (rotatedLogo) {
