@@ -472,6 +472,7 @@ function setPaymentState(state, message = "", subMessage = "") {
   const statusEl = $("payment-status");
   const actionsEl = $("payment-actions");
   const cancelRow = $("payment-cancel-row");
+  const successRow = $("payment-success-row");
   const subEl = $("payment-sub");
 
   // ── Reset all visual state first ──────────────────────────
@@ -481,6 +482,7 @@ function setPaymentState(state, message = "", subMessage = "") {
   resultIcon.className = "payment-result-icon";
   actionsEl.style.display = "none"; // hide retry/back by default
   cancelRow.style.display = "none"; // hide cancel by default
+  if (successRow) successRow.style.display = "none"; // hide capture button by default
 
   switch (state) {
     case "processing":
@@ -499,7 +501,8 @@ function setPaymentState(state, message = "", subMessage = "") {
       resultIcon.innerHTML =
         '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       resultIcon.classList.add("payment-result-icon--success");
-      statusEl.textContent = message || "Ödeme başarılı!";
+      statusEl.textContent = message || "Ödeme başarı ile gerçekleşti";
+      if (successRow) successRow.style.display = "flex";
       break;
 
     case "free":
@@ -619,7 +622,7 @@ async function _runPOSAttempt(
     );
 
     // ── Başarılı ──────────────────────────────────────────────
-    setPaymentState("success", "Ödeme başarılı!");
+    setPaymentState("success", "Ödeme başarı ile gerçekleşti");
 
     await savePayment({
       originalPrice,
@@ -630,8 +633,7 @@ async function _runPOSAttempt(
       posResponse: posResult,
     });
 
-    await sleep(1500);
-    initCaptureScreen();
+    $("btn-start-capture").onclick = () => initCaptureScreen();
   } catch (err) {
     // ── Hata / iptal / zaman aşımı ────────────────────────────
     console.error("[POS]", err);
